@@ -4,38 +4,45 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.expensetracker.domain.model.Expense
 import com.example.expensetracker.domain.repository.ExpenseRepository
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+
+enum class ReportPeriod(val title: String) {
+    DAY("Сегодня"),
+    WEEK("Неделя"),
+    MONTH("Месяц"),
+    ALL("Все время")
+}
 
 class MainViewModel(private val repository: ExpenseRepository) : ViewModel() {
 
-    val expenses: StateFlow<List<Expense>> = repository.getAllExpenses()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    // Состояние текущего фильтра
+    private val _currentPeriod = MutableStateFlow(ReportPeriod.MONTH)
+    val currentPeriod: StateFlow<ReportPeriod> = _currentPeriod.asStateFlow()
 
     val budgetLimit: StateFlow<Double> = repository.getBudgetLimit()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = 0.0
-        )
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
-    // Функция для добавления расхода
-    fun addExpense(expense: Expense) {
-        viewModelScope.launch {
-            repository.addExpense(expense)
+    val expenses: StateFlow<List<Expense>> = combine(
+        repository.getAllExpenses(),
+        _currentPeriod
+    ) { allExpenses, period ->
+        val now = LocalDate.now()
+        allExpenses.filter { expense ->
+            when (period) {
+                ReportPeriod.DAY -> expense.date == now
+                ReportPeriod.WEEK -> expense.date.isAfter(now.minusDays(7)) || expense.date == now.minusDays(7)
+                ReportPeriod.MONTH -> expense.date.month == now.month && expense.date.year == now.year
+                ReportPeriod.ALL -> true
+            }
         }
-    }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Функция для установки бюджета
-    fun setBudget(limit: Double) {
-        viewModelScope.launch {
-            repository.setBudgetLimit(limit)
-        }
-    }
+    // Действия
+    fun addExpense(expense: Expense) = viewModelScope.launch { repository.addExpense(expense) }
+
+    fun setBudget(limit: Double) = viewModelScope.launch { repository.setBudgetLimit(limit) }
+
+    fun setPeriod(period: ReportPeriod) { _currentPeriod.value = period }
 }
