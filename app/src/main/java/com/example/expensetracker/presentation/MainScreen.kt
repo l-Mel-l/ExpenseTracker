@@ -168,7 +168,6 @@ fun SummaryCard(totalSpent: Double, budgetLimit: Double, onEditBudget: () -> Uni
         Column(modifier = Modifier.padding(20.dp).fillMaxWidth()) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Потрачено", fontSize = 14.sp, color = TextGray)
-                // Кнопка редактирования бюджета
                 Icon(
                     imageVector = Icons.Default.Edit,
                     contentDescription = "Изменить бюджет",
@@ -179,10 +178,10 @@ fun SummaryCard(totalSpent: Double, budgetLimit: Double, onEditBudget: () -> Uni
             Spacer(modifier = Modifier.height(4.dp))
             Text("$totalSpent ₽", fontSize = 32.sp, fontWeight = FontWeight.ExtraBold, color = TextDark)
 
-            // Логика бюджета
             if (budgetLimit > 0) {
                 val percent = (totalSpent / budgetLimit).coerceAtMost(1.0).toFloat()
                 val isExceeded = totalSpent > budgetLimit
+                val remaining = budgetLimit - totalSpent // ВЫЧИСЛЯЕМ ОСТАТОК
 
                 Spacer(modifier = Modifier.height(12.dp))
                 LinearProgressIndicator(
@@ -192,7 +191,16 @@ fun SummaryCard(totalSpent: Double, budgetLimit: Double, onEditBudget: () -> Uni
                     trackColor = BgColor,
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Лимит: $budgetLimit ₽", fontSize = 12.sp, color = TextGray)
+
+                // ВЫВОДИМ ЛИМИТ И ОСТАТОК
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Лимит: $budgetLimit ₽", fontSize = 12.sp, color = TextGray)
+                    if (isExceeded) {
+                        Text("Превышение: ${-remaining} ₽", fontSize = 12.sp, color = Color.Red, fontWeight = FontWeight.Bold)
+                    } else {
+                        Text("Остаток: $remaining ₽", fontSize = 12.sp, color = PrimaryBlue, fontWeight = FontWeight.Bold)
+                    }
+                }
             } else {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text("Нажмите на карандаш, чтобы задать бюджет", fontSize = 12.sp, color = TextGray)
