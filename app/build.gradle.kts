@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlinx.kover") version "0.7.3"
 }
 
 android {
@@ -51,6 +52,7 @@ android {
 
 dependencies {
 
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
@@ -67,4 +69,18 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+}
+koverReport {
+    filters {
+        excludes {
+            classes(
+                "*.MainActivity",
+                "*.MainActivityKt",
+                "*.ui.theme.*",
+                "*.presentation.*Screen*",
+                "*.presentation.*Preview*",
+                "*ComposableSingletons*"
+            )
+        }
+    }
 }

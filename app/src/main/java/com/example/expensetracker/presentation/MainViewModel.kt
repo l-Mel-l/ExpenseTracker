@@ -42,7 +42,11 @@ class MainViewModel(private val repository: ExpenseRepository) : ViewModel() {
     // Действия
     fun addExpense(expense: Expense) = viewModelScope.launch { repository.addExpense(expense) }
 
-    fun setBudget(limit: Double) = viewModelScope.launch { repository.setBudgetLimit(limit) }
+    fun setBudget(limit: Double) {
+        if (limit >= 0) {
+            viewModelScope.launch { repository.setBudgetLimit(limit) }
+        }
+    }
 
     fun setPeriod(period: ReportPeriod) { _currentPeriod.value = period }
 }
